@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  jobmanager:
+    build: .
+    container_name: flink-jobmanager
+    ports:
+      - "8085:8081"
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 20
+    # environment:
+    #   - JOB_MANAGER_RPC_ADDRESS=jobmanager
+    #   - taskmanager.numberOfTaskSlots=20
+    command: jobmanager
+    volumes:
+      - ./jobs:/opt/flink/jobs
+      - ./output:/opt/flink/output
+      - ./custom_lib:/opt/flink/custom_lib
+    networks:
+      - flink-net
+    restart: unless-stopped
+
+  taskmanager:
+    build: .
+    container_name: flink-taskmanager
+    depends_on:
+      - jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 20
+    # environment:
+    #   - JOB_MANAGER_RPC_ADDRESS=jobmanager
+    command: taskmanager
+    volumes:
+      - ./jobs:/opt/flink/jobs
+      - ./output:/opt/flink/output
+      - ./custom_lib:/opt/flink/custom_lib
+    networks:
+      - flink-net
+    restart: unless-stopped
+
+  jupyter:
+    image: jupyter/scipy-notebook
+    container_name: flink-jupyter
+    ports:
+      - "8086:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./custom_lib:/home/jovyan/work/custom_lib
+    environment:
+      - JUPYTER_TOKEN=flink
+    networks:
+      - flink-net
+    restart: unless-stopped
+
+  broker:
+    image: confluentinc/cp-server:8.0.0
+    hostname: broker
+    container_name: broker
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      CLUSTER_ID: 'c3VwZXItY2x1c3Rlci1pZGVudGlmaWVy'  # valid base64 UUID
+    volumes:
+      - ./kafka-data:/var/lib/kafka/data
+    networks:
+      - flink-net
+    restart: unless-stopped
+
+networks:
+  flink-net:
+    external: true
