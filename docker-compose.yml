@@ -1,19 +1,14 @@
-version: '3.8'
 
 services:
   jobmanager:
     build: .
     container_name: flink-jobmanager
     ports:
-      - "8085:8081"
+      - "8087:8083"
     environment:
-      - |
-        FLINK_PROPERTIES=
+      FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 20
-    # environment:
-    #   - JOB_MANAGER_RPC_ADDRESS=jobmanager
-    #   - taskmanager.numberOfTaskSlots=20
     command: jobmanager
     volumes:
       - ./jobs:/opt/flink/jobs
@@ -29,12 +24,9 @@ services:
     depends_on:
       - jobmanager
     environment:
-      - |
-        FLINK_PROPERTIES=
+      FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 20
-    # environment:
-    #   - JOB_MANAGER_RPC_ADDRESS=jobmanager
     command: taskmanager
     volumes:
       - ./jobs:/opt/flink/jobs
@@ -44,16 +36,12 @@ services:
       - flink-net
     restart: unless-stopped
 
-  jupyter:
-    image: jupyter/scipy-notebook
-    container_name: flink-jupyter
-    ports:
-      - "8086:8888"
-    volumes:
-      - ./notebooks:/home/jovyan/work
-      - ./custom_lib:/home/jovyan/work/custom_lib
-    environment:
-      - JUPYTER_TOKEN=flink
+  sql-client:
+    build: .
+    container_name: flink-sql-client
+    depends_on:
+      - jobmanager
+    entrypoint: bin/sql-client.sh
     networks:
       - flink-net
     restart: unless-stopped
@@ -89,7 +77,7 @@ services:
     networks:
       - flink-net
     restart: unless-stopped
-
+    
 networks:
   flink-net:
     external: true

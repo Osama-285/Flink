@@ -1,5 +1,5 @@
-# Start from Flink 1.17.2 base image
-FROM flink:1.17.2
+# Start from Flink 2.0 base image
+FROM flink:2.0.0
 
 USER root
 
@@ -10,8 +10,8 @@ RUN apt-get update && \
     ln -sf /usr/bin/python3.10 /usr/bin/python && \
     ln -sf /usr/bin/pip3 /usr/bin/pip
 
-# Install PyFlink compatible with Flink 1.17.2
-RUN pip install apache-flink==1.17.0
+# Install PyFlink 2.0
+RUN pip install apache-flink==2.0.0
 
 # Set environment
 ENV PYTHONPATH=/opt/flink/python
@@ -22,6 +22,6 @@ WORKDIR /opt/flink
 # Copy job files
 COPY jobs/ /opt/flink/jobs/
 
-EXPOSE 8081 6123 6124
+EXPOSE 8083 6123 6124
 
 CMD ["bash"]
