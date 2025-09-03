@@ -11,8 +11,9 @@ def main():
             altitude INT,
             speed INT,
             status STRING,
-            event_time TIMESTAMP_LTZ(3),
-            WATERMARK FOR event_time AS event_time - INTERVAL '5' SECOND
+            `timestamp` TIMESTAMP_LTZ(3),
+            event_time AS `timestamp`,
+            WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '5' SECOND
         ) WITH (
             'connector' = 'kafka',
             'topic' = 'flight',
@@ -21,6 +22,7 @@ def main():
             'scan.startup.mode' = 'earliest-offset',
             'format' = 'json',
             'json.fail-on-missing-field' = 'false',
+            'json.timestamp-format.standard' = 'ISO-8601',
             'json.ignore-parse-errors' = 'true'
         )
     """)
@@ -36,7 +38,7 @@ def main():
         altitude INT,
         speed INT,
         status STRING,
-        `timestamp` TIMESTAMP_LTZ(3)
+        event_time TIMESTAMP_LTZ(3)
     ) WITH (
         'connector' = 'print'
     )
@@ -45,10 +47,12 @@ def main():
 
     t_env.execute_sql("""
     INSERT INTO print_sink
-    SELECT * FROM flights
+    SELECT flight, airline, altitude, speed, status, event_time
+    FROM flights
 """)
 
     # t_env.execute_sql("SELECT * FROM flights")
 
 if __name__ == "__main__":
     main()
+
