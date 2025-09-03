@@ -1,6 +1,6 @@
 from pyflink.datastream import StreamExecutionEnvironment
 from pyflink.datastream.connectors.kafka import KafkaSource, KafkaOffsetsInitializer
-from pyflink.common.serialization import SimpleStringSchema
+# from pyflink.common.serialization import SimpleStringSchema
 from pyflink.common import WatermarkStrategy, Types, Time
 from pyflink.datastream.window import TumblingProcessingTimeWindows
 from pyflink.datastream.functions import ReduceFunction
@@ -22,7 +22,7 @@ def main():
         ).build()
 
     kafka_source = KafkaSource.builder() \
-        .set_bootstrap_servers("broker:29092").set_topics("bank.transactions") \
+        .set_bootstrap_servers("broker:29094").set_topics("bank.transactions") \
         .set_group_id("flink-group") \
         .set_starting_offsets(KafkaOffsetsInitializer.earliest()) \
         .set_value_only_deserializer(deserializer) \
