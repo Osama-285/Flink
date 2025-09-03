@@ -22,6 +22,6 @@ WORKDIR /opt/flink
 # Copy job files
 COPY jobs/ /opt/flink/jobs/
 
-EXPOSE 8083 6123 6124
+EXPOSE 8081 6123 6124
 
 CMD ["bash"]
