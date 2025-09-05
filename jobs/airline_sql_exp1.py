@@ -27,9 +27,6 @@ def main():
         )
     """)
     print("Tables:", t_env.list_tables())
-    print("Functions:", t_env.list_user_defined_functions())
-    print("Current catalog:", t_env.get_current_catalog())
-    print("Current database:", t_env.get_current_database())
 
     t_env.execute_sql("""
     CREATE TEMPORARY TABLE print_sink (
@@ -50,8 +47,6 @@ def main():
     SELECT flight, airline, altitude, speed, status, event_time
     FROM flights
 """)
-
-    # t_env.execute_sql("SELECT * FROM flights")
 
 if __name__ == "__main__":
     main()
