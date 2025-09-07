@@ -10,6 +10,8 @@ from pyflink.datastream.functions import KeySelector, ProcessWindowFunction
 from pyflink.common.serialization import SimpleStringSchema
 from pyflink.common.typeinfo import Types
 from pyflink.common.time import Time
+from datetime import datetime, timezone
+
 # from pyflink.datastream.window import TimeWindow
 # from typing import Iterable
 
@@ -21,7 +23,7 @@ def parse_json(value: str) -> Row:
     rec = json.loads(value)
 
     # convert ISO8601 -> epoch millis
-    ts = datetime.datetime.fromisoformat(rec["timestamp"].replace("Z", "+00:00"))
+    ts = datetime.fromisoformat(rec["timestamp"].replace("Z", "+00:00"))
     ts_millis = int(ts.timestamp() * 1000)
 
     return Row(
@@ -52,10 +54,17 @@ class EventTimeAssigner(TimestampAssigner):
 class CountWindow(ProcessWindowFunction):
     def process(self, key, context, elements):
         total = sum(e.flight_count for e in elements)
+
+        # Convert ms -> ISO string
+        start_iso = datetime.fromtimestamp(context.window().start / 1000,
+                                           tz=timezone.utc).isoformat()
+        end_iso   = datetime.fromtimestamp(context.window().end / 1000,
+                                           tz=timezone.utc).isoformat()
+
         yield Row(
             airline=key,
-            window_start=context.window().start,
-            window_end=context.window().end,
+            window_start=start_iso,
+            window_end=end_iso,
             flight_count=total
         )
 
@@ -111,9 +120,9 @@ def main():
         .window(TumblingEventTimeWindows.of(Time.seconds(5)))
         .process(
             CountWindow(),
-            output_type=Types.ROW_NAMED(
+            output_type = Types.ROW_NAMED(
                 ["airline", "window_start", "window_end", "flight_count"],
-                [Types.STRING(), Types.LONG(), Types.LONG(), Types.INT()]
+                [Types.STRING(), Types.STRING(), Types.STRING(), Types.INT()]
             )
         )
     )
