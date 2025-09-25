@@ -23,7 +23,7 @@ def fraud_detection():
       WATERMARK FOR ts AS ts - INTERVAL '5' SECOND
     ) WITH (
       'connector' = 'kafka',
-      'topic' = 'transactions',
+      'topic' = 'transaction',
       'properties.bootstrap.servers' = '{BOOTSTRAP}',
       'properties.group.id' = 'flink-fraud',
       'scan.startup.mode' = 'earliest-offset',
@@ -44,7 +44,7 @@ def fraud_detection():
       PRIMARY KEY (account_id, window_start) NOT ENFORCED
     ) WITH (
       'connector' = 'upsert-kafka',
-      'topic' = 'fraud_alerts',
+      'topic' = 'metrics',
       'properties.bootstrap.servers' = '{BOOTSTRAP}',
       'key.format' = 'json',
       'value.format' = 'json'
