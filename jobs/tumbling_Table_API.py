@@ -31,7 +31,7 @@ def main():
     table = (
         t_env.from_path("flight")
         .window(
-            Tumble.over(expr.lit(5).seconds)  # Window Time
+            Tumble.over(expr.lit(5).seconds)  
                   .on(expr.col("timestamp"))
                   .alias("w")
         )
