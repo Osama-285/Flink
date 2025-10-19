@@ -201,12 +201,20 @@
 # if __name__ == "__main__":
 #     main()
 
-from pyflink.table import EnvironmentSettings, TableEnvironment, expressions as expr
+from pyflink.table import EnvironmentSettings, TableEnvironment,StreamTableEnvironment,expressions as expr
 from pyflink.table.expressions import col, lit, call_sql
+from pyflink.datastream import StreamExecutionEnvironment
+
 
 def main():
+    env = StreamExecutionEnvironment.get_execution_environment()
+    env.set_parallelism(5)
     settings = EnvironmentSettings.in_streaming_mode()
-    t_env = TableEnvironment.create(settings)
+    t_env = StreamTableEnvironment.create(env, environment_settings=settings)
+    # t_env.get_config().get_configuration().set_string("parallelism.default", "5")
+    # t_env.get_config().set("table.exec.resource.default-parallelism", "5")
+
+
     t_env.execute_sql("""
     CREATE TABLE ship_info (
         shipId STRING,
@@ -241,6 +249,29 @@ def main():
             ).alias("expected_dwell_minutes")
         )
     )
+    # result = (
+    #     ship_info
+    #     .filter(
+    #         (expr.col("status") == expr.lit("DEPARTED")) &
+    #         col("departureTime").is_not_null
+    #     )
+    #     .join(avg_dwell)  # Cartesian join since avg_dwell is single-row
+    #     .select(
+    #         expr.col("shipId"),
+    #         expr.col("name"),
+    #         expr.col("berthId"),
+    #         expr.col("flag"),
+    #         expr.call_sql("TIMESTAMPDIFF(MINUTE, arrivalTime, departureTime)").alias("actual_dwell_minutes"),
+    #         expr.col("expected_dwell_minutes"),
+    #         (
+    #             expr.call_sql("TIMESTAMPDIFF(MINUTE, arrivalTime, departureTime)")
+    #             - expr.col("expected_dwell_minutes")
+    #         ).alias("delay_minutes")
+    #     )
+    #     .filter(
+    #         expr.call_sql("TIMESTAMPDIFF(MINUTE, arrivalTime, departureTime)") > expr.col("expected_dwell_minutes")
+    #     )
+    # )
 
     # result = (
     #     ship_info.filter(
@@ -262,32 +293,55 @@ def main():
 
     #     )
     # )
-    result = (
-        ship_info
-        .join(avg_dwell)  # join first
-        .where(
+    # result = (
+    #     ship_info
+    #     .join(avg_dwell)  # join first
+    #     .where(
+    #         (col("status") == expr.lit("DEPARTED")) &
+    #         (col("departureTime").is_not_null) &
+    #         (
+    #             expr.call_sql("TIMESTAMPDIFF(MINUTE, departureTime, arrivalTime)") >
+    #             col("a.expected_dwell_minutes")
+    #         )
+    #     )
+    #     .select(
+    #         col("s.shipId"),
+    #         col("s.name"),
+    #         col("s.berthId"),
+    #         col("s.flag"),
+    #         expr.call_sql("TIMESTAMPDIFF(MINUTE, s.departureTime,s.arrivalTime)").alias("actual_dwell_minutes"),
+    #         col("a.expected_dwell_minutes"),
+    #         (
+    #             expr.call_sql("TIMESTAMPDIFF(MINUTE,s.departureTime, s.arrivalTime)") -
+    #             col("a.expected_dwell_minutes")
+    #         ).alias("delay_minutes")
+    #     )
+    # )
+    result = ship_info.join(avg_dwell)
+    final_result = (
+        result.filter(
             (col("status") == expr.lit("DEPARTED")) &
             (col("departureTime").is_not_null) &
             (
-                expr.call_sql("TIMESTAMPDIFF(MINUTE, departureTime, arrivalTime)") >
-                col("a.expected_dwell_minutes")
+                expr.call_sql("TIMESTAMPDIFF(MINUTE, departureTime, arrivalTime)") > col("expected_dwell_minutes")
             )
-        )
-        .select(
-            col("s.shipId"),
-            col("s.name"),
-            col("s.berthId"),
-            col("s.flag"),
-            expr.call_sql("TIMESTAMPDIFF(MINUTE, s.departureTime,s.arrivalTime)").alias("actual_dwell_minutes"),
-            col("a.expected_dwell_minutes"),
+        ).select(
+            col("shipId"),
+            col("name"),
+            col("berthId"),
+            col("flag"),
+            expr.call_sql("TIMESTAMPDIFF(MINUTE, departureTime,arrivalTime)").alias("actual_dwell_minutes"),
+            col("expected_dwell_minutes"),
             (
-                expr.call_sql("TIMESTAMPDIFF(MINUTE,s.departureTime, s.arrivalTime)") -
-                col("a.expected_dwell_minutes")
+                expr.call_sql("TIMESTAMPDIFF(MINUTE,departureTime, arrivalTime)") - col("expected_dwell_minutes")
             ).alias("delay_minutes")
         )
     )
 
-    result.execute().print()
+    # result.execute().print()
+    # result.print_schema()
+    final_result.execute().print()
+
 
 if __name__ == "__main__":
     main()
