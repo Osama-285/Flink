@@ -340,7 +340,7 @@ def main():
 
     # result.execute().print()
     # result.print_schema()
-    final_result.execute().print()
+    final_result.execute("Sink_table").print()
 
 
 if __name__ == "__main__":
