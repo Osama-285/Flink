@@ -19,9 +19,12 @@ ENV PYTHONPATH=/opt/flink/python
 # Set working directory
 WORKDIR /opt/flink
 
+COPY custom_lib/*.jar /opt/flink/lib/
 # Copy job files
 COPY jobs/ /opt/flink/jobs/
 
 EXPOSE 8081 6123 6124
+
+WORKDIR /opt/flink
 
 CMD ["bash"]
