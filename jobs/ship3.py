@@ -28,9 +28,9 @@ def main():
     ) WITH (
         'connector' = 'kafka',
         'topic' = 'shipEvent',
-        'properties.bootstrap.servers' = 'broker:29094',
+        'properties.bootstrap.servers' = 'broker:29092',
         'properties.group.id' = 'flink_consumer',
-        'scan.startup.mode' = 'latest-offset',
+        'scan.startup.mode' = 'earliest-offset',
         'json.timestamp-format.standard' = 'ISO-8601',
         'format' = 'json'
     )
