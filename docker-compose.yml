@@ -6,14 +6,18 @@ services:
     ports:
       - "8087:8081"
     environment:
+      PYTHON_WORKER_MEMORY_LIMIT: 1g
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 20
+        jobmanager.memory.process.size: 2g
+
     command: jobmanager
     volumes:
       - ./jobs:/opt/flink/jobs
       - ./output:/opt/flink/output
       - ./custom_lib:/opt/flink/custom_lib
+      - ./flink-checkpoints:/opt/flink/checkpoints
     networks:
       - main-bridge
     restart: unless-stopped
@@ -24,14 +28,17 @@ services:
     depends_on:
       - jobmanager
     environment:
+      PYTHON_WORKER_MEMORY_LIMIT: 1g
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 20
+        taskmanager.memory.process.size: 2g
     command: taskmanager
     volumes:
       - ./jobs:/opt/flink/jobs
       - ./output:/opt/flink/output
       - ./custom_lib:/opt/flink/custom_lib
+      - ./flink-checkpoints:/opt/flink/checkpoints
     networks:
       - main-bridge
     restart: unless-stopped
