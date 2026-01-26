@@ -74,6 +74,7 @@ services:
       KAFKA_MIN_INSYNC_REPLICAS: 1
       KAFKA_JMX_PORT: 9110
       KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
       KAFKA_PROCESS_ROLES: 'broker,controller'
       KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker2:29095'
       KAFKA_LISTENERS: 'PLAINTEXT://broker2:29094,CONTROLLER://broker2:29095,PLAINTEXT_HOST://0.0.0.0:9094'
@@ -87,6 +88,24 @@ services:
       - main-bridge
     restart: unless-stopped
     
+  
+  schema-registry:
+    image: confluentinc/cp-schema-registry:8.0.0
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - broker
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker2:29094'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    networks:
+      - main-bridge
+    volumes:
+      - ./schemas:/opt/schema-registry/schemas
+
 networks:
   main-bridge:
     external: true

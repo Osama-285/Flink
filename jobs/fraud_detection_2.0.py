@@ -70,9 +70,9 @@ def main():
 
     kafka_source = (
         KafkaSource.builder()
-        .set_bootstrap_servers("broker:29092")
-        .set_topics("transactions")
-        .set_group_id("fraud-detector")
+        .set_bootstrap_servers("broker2:29094")
+        .set_topics("transactionss")
+        .set_group_id("detector-fraud")
         .set_starting_offsets(KafkaOffsetsInitializer.earliest())
         .set_value_only_deserializer(
             JsonRowDeserializationSchema.builder().type_info(
